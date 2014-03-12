@@ -1488,17 +1488,19 @@ xui.extend({
 
 }(this, document);
 
-function dir(elem, dir, until ){
-	var matched = [],
-		cur = elem[ dir ];
 
-	while ( cur && cur.nodeType !== 9 && (until === undefined || cur.nodeType !== 1 || !jQuery( cur ).is( until )) ) {
-		if ( cur.nodeType === 1 ) {
-			matched.push( cur );
-		}
-		cur = cur[dir];
+function convertToArray(nodes){
+	var array = null;
+	try{
+		array = Array.prototype.slice.call(nodes,0);
 	}
-	return matched;
+	catch(ex){
+		array = new Array();
+		for(var i = 0,len =nodes.length; i < len; i++){
+			array[array.length] = nodes[i];
+		}
+	}
+	return array;
 }
 
 xui.extend({
@@ -1508,11 +1510,52 @@ xui.extend({
 			return xui(parent && parent.nodeType !== 11 ? parent : null);
 		}
 		
-		if((typeof elem).toLocaleLowerCase() =="function"){
-			fn = elem || function(){};
-			
-			return dir( this[0], "parentNode", fn );
+		if(elem && typeof elem === "string"){
+			var elem = convertToArray(document.querySelectorAll(elem)||[]);
+
+			var matched = [],
+				cur = this[0]['parentNode'];
+				
+			while ( cur && cur.nodeType !== 9) {
+				if ( cur.nodeType === 1 && ~elem.indexOf(cur)) {
+					
+					if(fn && typeof fn === 'function'){
+						xui(cur).each(function(el){
+							if(fn(el)){
+								matched.push( cur );
+							}
+						});
+					}
+					else if(!fn){
+						matched.push( cur );
+					}
+				}
+
+				cur = cur['parentNode'];
+			}
+
+			return matched;
 		}
+		
+	},
+	merge: function( first, second ) {
+		var l = second.length,
+			i = first.length,
+			j = 0;
+
+		if ( typeof l === "number" ) {
+			for ( ; j < l; j++ ) {
+				first[ i++ ] = second[ j ];
+			}
+		} else {
+			while ( second[j] !== undefined ) {
+				first[ i++ ] = second[ j++ ];
+			}
+		}
+
+		first.length = i;
+
+		return first;
 	}
 });
 })();
